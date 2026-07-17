@@ -11,10 +11,15 @@ export default async function PublicLayout({
   children: React.ReactNode;
 }) {
   // Fetch all categories to feed the navigation spine
-  const categories = await prisma.category.findMany({
-    orderBy: { displayOrder: "asc" },
-    select: { name: true, slug: true },
-  });
+  let categories: any[] = [];
+  try {
+    categories = await prisma.category.findMany({
+      orderBy: { displayOrder: "asc" },
+      select: { name: true, slug: true },
+    });
+  } catch (e) {
+    console.warn("Failed to fetch categories for spine navigation:", e);
+  }
 
   return (
     <div className="layout min-h-screen flex flex-col md:flex-row bg-paper text-ink selection:bg-ink selection:text-paper">

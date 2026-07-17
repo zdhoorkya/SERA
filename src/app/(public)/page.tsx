@@ -9,27 +9,65 @@ import { getTrendingArticles } from "@/lib/trending";
 export const revalidate = 0; // Fresh content on load
 
 export default async function HomePage() {
-  // Fetch published articles
-  const publishedArticles = await prisma.article.findMany({
-    where: { status: "PUBLISHED" },
-    include: { authors: true, category: true },
-    orderBy: { publishDate: "desc" },
-  });
+  let publishedArticles: any[] = [];
+  let headlines: any[] = [];
+  let trendingArticles: any[] = [];
+  let isDbUninitialized = false;
 
-  // Fetch editor-pinned headlines
-  const headlines = await prisma.article.findMany({
-    where: { status: "PUBLISHED", isPinnedToHeadlines: true },
-    orderBy: { headlineOrder: "asc" },
-    take: 6,
-    include: { category: true },
-  });
+  try {
+    // Fetch published articles
+    publishedArticles = await prisma.article.findMany({
+      where: { status: "PUBLISHED" },
+      include: { authors: true, category: true },
+      orderBy: { publishDate: "desc" },
+    });
 
-  // Fetch velocity-based trending articles
-  const trendingArticles = await getTrendingArticles();
+    // Fetch editor-pinned headlines
+    headlines = await prisma.article.findMany({
+      where: { status: "PUBLISHED", isPinnedToHeadlines: true },
+      orderBy: { headlineOrder: "asc" },
+      take: 6,
+      include: { category: true },
+    });
+
+    // Fetch velocity-based trending articles
+    trendingArticles = await getTrendingArticles();
+  } catch (error) {
+    console.error("Database query failed on homepage, database may not be initialized:", error);
+    isDbUninitialized = true;
+  }
+
+  if (isDbUninitialized) {
+    return (
+      <div className="bg-paper min-h-[75vh] flex flex-col items-center justify-center p-8 select-none border-b border-ink">
+        <div className="max-w-md w-full border border-ink p-8 bg-white text-center space-y-5 shadow-sm">
+          <div className="flex justify-center">
+            <svg viewBox="0 0 24 24" width="36" height="36" className="fill-ink">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+            </svg>
+          </div>
+          <h2 className="display-font font-medium text-2xl uppercase tracking-wider text-ink border-b border-line pb-4">
+            Setup Required
+          </h2>
+          <p className="font-serif italic text-xs text-[#52525B] leading-relaxed">
+            The platform database has not been initialized yet. Click below to verify database tables and seed sample editorial records on your hosting space.
+          </p>
+          <div className="pt-2">
+            <a
+              href="/api/db-setup?secret=sera-setup-12345"
+              className="inline-block bg-ink hover:bg-black text-paper text-[10px] tracking-widest uppercase font-semibold py-3.5 px-6 transition-colors"
+            >
+              Initialize Database
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Extract sections matching mockup flow
   // 1. Hero: The long read (World)
-  const heroArticle = publishedArticles[0];
+  const heroArticle = publishedArticles[0] || null;
 
   // 2. Opinions (Opinion Rail)
   const opinionArticles = publishedArticles.filter((a) => a.isOpinion).slice(0, 3);
@@ -37,7 +75,7 @@ export default async function HomePage() {
   // 3. Lead Main Story (Top Story not opinions and not the hero)
   const leadMainArticle = publishedArticles.find(
     (a) => !a.isOpinion && a.id !== heroArticle?.id
-  );
+  ) || null;
 
   // 4. Politics & Policy (Strips) - filter by politics/india, not already displayed
   const politicsAndPolicyArticles = publishedArticles
