@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-
-const execAsync = promisify(exec);
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -19,12 +15,108 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    console.log("Starting production database setup...");
-    
-    // 1. Run Prisma Db Push to sync the database schema on Hostinger's filesystem
-    const { stdout, stderr } = await execAsync("npx prisma db push --accept-data-loss");
-    console.log("DB Push stdout:", stdout);
-    if (stderr) console.warn("DB Push stderr:", stderr);
+    console.log("Starting production database setup via raw SQL queries...");
+
+    // Execute CREATE TABLE statements sequentially
+    const queries = [
+      `CREATE TABLE IF NOT EXISTS "User" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "email" TEXT NOT NULL,
+        "password" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "role" TEXT NOT NULL DEFAULT 'AUTHOR',
+        "title" TEXT,
+        "bio" TEXT,
+        "headshot" TEXT,
+        "active" BOOLEAN NOT NULL DEFAULT true,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "Category" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "slug" TEXT NOT NULL,
+        "description" TEXT,
+        "displayOrder" INTEGER NOT NULL DEFAULT 0
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "Tag" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "name" TEXT NOT NULL,
+        "slug" TEXT NOT NULL
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "Article" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "title" TEXT NOT NULL,
+        "slug" TEXT NOT NULL,
+        "deck" TEXT,
+        "body" TEXT NOT NULL,
+        "categoryId" INTEGER NOT NULL,
+        "heroImage" TEXT,
+        "caption" TEXT,
+        "status" TEXT NOT NULL DEFAULT 'DRAFT',
+        "publishDate" DATETIME,
+        "readTime" INTEGER NOT NULL DEFAULT 1,
+        "seoTitle" TEXT,
+        "seoDesc" TEXT,
+        "canonicalUrl" TEXT,
+        "ogImage" TEXT,
+        "views" INTEGER NOT NULL DEFAULT 0,
+        "isOpinion" BOOLEAN NOT NULL DEFAULT false,
+        "isPinnedToHeadlines" BOOLEAN NOT NULL DEFAULT false,
+        "headlineOrder" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" DATETIME NOT NULL,
+        CONSTRAINT "Article_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "ReviewComment" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "articleId" INTEGER NOT NULL,
+        "userId" INTEGER NOT NULL,
+        "text" TEXT NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ReviewComment_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "Article" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "ReviewComment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "ViewEvent" (
+        "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "articleId" INTEGER NOT NULL,
+        "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT "ViewEvent_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "Article" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "_ArticleAuthors" (
+        "A" INTEGER NOT NULL,
+        "B" INTEGER NOT NULL,
+        CONSTRAINT "_ArticleAuthors_A_fkey" FOREIGN KEY ("A") REFERENCES "Article" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "_ArticleAuthors_B_fkey" FOREIGN KEY ("B") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS "_ArticleTags" (
+        "A" INTEGER NOT NULL,
+        "B" INTEGER NOT NULL,
+        CONSTRAINT "_ArticleTags_A_fkey" FOREIGN KEY ("A") REFERENCES "Article" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+        CONSTRAINT "_ArticleTags_B_fkey" FOREIGN KEY ("B") REFERENCES "Tag" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+      )`,
+
+      `CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "Category_slug_key" ON "Category"("slug")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "Tag_slug_key" ON "Tag"("slug")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "Article_slug_key" ON "Article"("slug")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "_ArticleAuthors_AB_unique" ON "_ArticleAuthors"("A", "B")`,
+      `CREATE INDEX IF NOT EXISTS "_ArticleAuthors_B_index" ON "_ArticleAuthors"("B")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "_ArticleTags_AB_unique" ON "_ArticleTags"("A", "B")`,
+      `CREATE INDEX IF NOT EXISTS "_ArticleTags_B_index" ON "_ArticleTags"("B")`
+    ];
+
+    for (const sql of queries) {
+      await prisma.$executeRawUnsafe(sql);
+    }
+    console.log("All tables and indexes verified/created.");
 
     // 2. Programmatically seed the database if categories do not exist
     const categoryCount = await prisma.category.count();
@@ -212,8 +304,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      message: "Database push and seeding completed successfully!",
-      stdout,
+      message: "Database schema verification and seeding completed successfully!",
     });
   } catch (error: any) {
     console.error("Database setup error:", error);
