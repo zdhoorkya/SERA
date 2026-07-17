@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #F7F6F2;
+  --ink: #15130F;
+  --soft: #57544B;
+  --faint: #8A8779;
+  --line: #D9D5C7;
+  --line-strong: #15130F;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: 'Newsreader', Georgia, serif;
+}
+
+/* Grayscale + high contrast photo filtering as approved in design reference */
+.grayscale-img {
+  filter: grayscale(1) contrast(1.08);
+  transition: filter 0.3s ease;
+}
+.grayscale-img:hover {
+  filter: grayscale(0.8) contrast(1.05);
+}
+
+/* Custom editorial utility styles */
+.display-font {
+  font-family: 'Fraunces', serif;
+}
+
+.util-font {
+  font-family: 'Archivo', sans-serif;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* Drop-cap configuration */
+.drop-cap::first-letter {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 74px;
+  float: left;
+  line-height: 0.78;
+  padding: 6px 10px 0 0;
+  color: var(--ink);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

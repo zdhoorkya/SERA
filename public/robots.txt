@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /studio/
+Disallow: /api/
+
+Sitemap: https://sera.primpla.com/sitemap.xml

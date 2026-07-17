@@ -1,0 +1,21 @@
+# Checklist: Celebrity, Trending, and Headlines Additions
+
+- [/] Database Schema & Seeding
+  - [ ] Modify `prisma/schema.prisma` to add headlines fields and view events
+  - [ ] Execute `npx prisma db push` to migrate database
+  - [ ] Update `prisma/seed.js` to seed the Celebrity category and articles
+  - [ ] Execute `node prisma/seed.js` to populate records
+- [ ] Celebrity Editorial Workflow Reminders
+  - [ ] Update `ArticleForm.tsx` to display checklist warnings when "Celebrity" is selected
+  - [ ] Update `ReviewPanel.tsx` to display the verification reminders
+- [ ] Homepage Trending Section
+  - [ ] Create `src/lib/trending.ts` popularity utility (velocity-based, 6-hour window, 15-minute SWR caching)
+  - [ ] Update public article detail page to record `ViewEvent` records
+  - [ ] Update homepage `page.tsx` to render Trending section with ranked list (01-05) and rocket SVG
+- [ ] Homepage Headlines Section
+  - [ ] Update database APIs to support `isPinnedToHeadlines` and `headlineOrder` on creation and edit
+  - [ ] Add "Pin to Headlines" toggle in `ArticleForm.tsx`
+  - [ ] Render Headlines horizontal bar directly below masthead and above hero (swipeable on mobile)
+- [ ] Verification & Git Repository Setup
+  - [ ] Initialize git, commit changes, and check git remote
+  - [ ] Verify production build compiles successfully

@@ -1,0 +1,91 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  password       String
+  name           String
+  role           String          @default("AUTHOR") // "ADMIN", "EDITOR", "AUTHOR"
+  title          String?         // e.g., "Senior Tech Writer"
+  bio            String?
+  headshot       String?         // Path to profile image
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  // Relations
+  articles       Article[]       @relation("ArticleAuthors")
+  comments       ReviewComment[]
+}
+
+model Category {
+  id           Int       @id @default(autoincrement())
+  name         String
+  slug         String    @unique
+  description  String?
+  displayOrder Int       @default(0)
+  articles     Article[]
+}
+
+model Tag {
+  id       Int       @id @default(autoincrement())
+  name     String
+  slug     String    @unique
+  articles Article[] @relation("ArticleTags")
+}
+
+model Article {
+  id           Int             @id @default(autoincrement())
+  title        String
+  slug         String          @unique
+  deck         String?
+  body         String          // MD or HTML Rich Text
+  categoryId   Int
+  category     Category        @relation(fields: [categoryId], references: [id])
+  heroImage    String?
+  caption      String?
+  status       String          @default("DRAFT") // "DRAFT", "IN_REVIEW", "CHANGES_REQUESTED", "PENDING_ADMIN", "PUBLISHED"
+  publishDate  DateTime?
+  readTime     Int             @default(1) // in minutes
+  seoTitle     String?
+  seoDesc      String?
+  canonicalUrl String?
+  ogImage      String?
+  views        Int             @default(0)
+  isOpinion           Boolean         @default(false)
+  isPinnedToHeadlines Boolean         @default(false)
+  headlineOrder       Int             @default(0)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  // Relations
+  authors             User[]          @relation("ArticleAuthors")
+  tags                Tag[]           @relation("ArticleTags")
+  comments            ReviewComment[]
+  viewEvents          ViewEvent[]
+}
+
+model ReviewComment {
+  id        Int      @id @default(autoincrement())
+  articleId Int
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  text      String
+  createdAt DateTime @default(now())
+}
+
+model ViewEvent {
+  id        Int      @id @default(autoincrement())
+  articleId Int
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}

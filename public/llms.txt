@@ -1,0 +1,19 @@
+# SERA — Editorial Registry (sera.primpla.com)
+
+SERA is an independent digital news and magazine platform under the Primpla parent ecosystem.
+
+## Layout & Navigation Structure
+
+- Homepage (/): Displays the daily lead long read, an opinion column rail, politics strips, and culture/lifestyle grids.
+- Columns (/category/[slug]): Dedicated paginated views of specific sections (World, India, Business, Tech, Politics, Culture, Opinion, Entertainment, Lifestyle).
+- Articles (/article/[slug]): Single-article typography plates featuring full-bleed grayscale headers, drop caps, pull-quotes, and related reads.
+- Studio (/studio): Access-restricted dashboard shell for drafting, inline peer review commenting, and user registration.
+
+## Site Metadata & SEO
+- Structured Data: Articles include schema.org `NewsArticle` schemas, while lists integrate `BreadcrumbList` formats.
+- Sitemap: Dynamic XML sitemap is served at `/sitemap.xml` for indexation mapping.
+
+## Access Roles
+- Admin: Management of site, categories, user deactivation, and final verify publishes.
+- Editor: Reviews submissions, edits content, and approves pieces to verification queues.
+- Author: Drafts pieces, collaborates, and submits to editors for review loops.
