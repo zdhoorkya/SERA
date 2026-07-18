@@ -11,13 +11,16 @@ class MockPrismaModel {
 
   private async fetchRemote(action: string, args: any = {}) {
     const remoteUrl = "https://database.primpla.com/api.php";
+    const dbToken = process.env.DB_PASSWORD || "primpla-sera-2026";
     try {
       const response = await fetch(remoteUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-Database-Token": dbToken,
         },
         body: JSON.stringify({
+          token: dbToken,
           model: this.modelName,
           action,
           args,
