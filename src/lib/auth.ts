@@ -44,6 +44,21 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.name = user.name;
+      } else if (token.id) {
+        // Query database to retrieve the latest name and role to keep session fresh
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: parseInt(token.id as string, 10) },
+            select: { name: true, role: true }
+          });
+          if (dbUser) {
+            token.name = dbUser.name;
+            token.role = dbUser.role;
+          }
+        } catch (e) {
+          console.error("Failed to fetch fresh user info in JWT callback:", e);
+        }
       }
       return token;
     },
@@ -51,6 +66,7 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        session.user.name = token.name as string;
       }
       return session;
     }
