@@ -77,7 +77,7 @@ export default function ArticleForm({ categories, authors, currentUser, initialA
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [focalPoint, setFocalPoint] = useState("center"); // focal point alignment class
+  const [focalPoint, setFocalPoint] = useState("top"); // focal point alignment class
 
   // Form submission handler
   const handleSubmit = async (statusOverride?: string) => {

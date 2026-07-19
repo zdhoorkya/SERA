@@ -94,7 +94,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                       <img
                         src={leadArticle.heroImage}
                         alt={leadArticle.title}
-                        className="w-full h-full object-cover grayscale-img transform group-hover:scale-[1.01] transition-transform duration-700"
+                        className="w-full h-full object-cover object-top grayscale-img transform group-hover:scale-[1.01] transition-transform duration-700"
                       />
                     </div>
                   )}

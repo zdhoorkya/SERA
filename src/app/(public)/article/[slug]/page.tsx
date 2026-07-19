@@ -116,7 +116,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <img
               src={article.heroImage}
               alt={article.title}
-              className="w-full h-auto max-h-[460px] object-cover grayscale-img"
+              className="w-full h-auto max-h-[650px] object-cover object-top grayscale-img"
             />
             {article.caption && (
               <figcaption className="font-sans text-[11px] text-faint mt-2 tracking-[0.03em] uppercase">

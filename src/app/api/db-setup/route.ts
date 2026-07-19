@@ -181,6 +181,7 @@ export async function GET(req: NextRequest) {
         { name: "Culture", slug: "culture" },
         { name: "Celebrity", slug: "celebrity" },
         { name: "Lifestyle", slug: "lifestyle" },
+        { name: "Love", slug: "love" },
         { name: "Opinion", slug: "opinion" },
       ];
 

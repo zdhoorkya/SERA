@@ -72,10 +72,11 @@ export default async function HomePage() {
   // 2. Opinions (Opinion Rail)
   const opinionArticles = publishedArticles.filter((a) => a.isOpinion).slice(0, 3);
 
-  // 3. Lead Main Story (Top Story not opinions and not the hero)
-  const leadMainArticle = publishedArticles.find(
-    (a) => !a.isOpinion && a.id !== heroArticle?.id
-  ) || null;
+  // 3. Lead Main Story (Top Story: prioritizes pinned articles, or newest non-opinion article)
+  const leadMainArticle =
+    publishedArticles.find((a) => a.isPinnedToHeadlines && !a.isOpinion) ||
+    publishedArticles.find((a) => !a.isOpinion && a.id !== heroArticle?.id) ||
+    null;
 
   // 4. Politics & Policy (Strips) - filter by politics/india, not already displayed
   const politicsAndPolicyArticles = publishedArticles
@@ -127,7 +128,7 @@ export default async function HomePage() {
               <img
                 src={heroArticle.heroImage || "https://picsum.photos/id/1048/1400/900"}
                 alt={heroArticle.title}
-                className="w-full h-full object-cover grayscale-img transform group-hover:scale-[1.01] transition-transform duration-700"
+                className="w-full h-full object-cover object-top grayscale-img transform group-hover:scale-[1.01] transition-transform duration-700"
               />
             </div>
             <div className="hero-caption absolute left-0 right-0 bottom-0 p-8 md:p-12 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end">
@@ -214,7 +215,7 @@ export default async function HomePage() {
                     <img
                       src={leadMainArticle.heroImage || "https://picsum.photos/id/1074/900/560"}
                       alt={leadMainArticle.title}
-                      className="w-full h-full object-cover grayscale-img transform group-hover:scale-[1.01] transition-transform duration-700"
+                      className="w-full h-full object-cover object-top grayscale-img transform group-hover:scale-[1.01] transition-transform duration-700"
                     />
                   </div>
                   <span className="font-sans text-[11px] tracking-[0.06em] uppercase text-faint block mb-2.5">
