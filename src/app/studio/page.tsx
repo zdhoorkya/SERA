@@ -12,37 +12,58 @@ export default async function StudioDashboardOverview() {
   const session = await getServerSession(authOptions);
   const user = session?.user || {};
 
-  // Fetch counts and metrics
-  const totalArticles = await prisma.article.count();
-  const totalPublished = await prisma.article.count({ where: { status: "PUBLISHED" } });
-  const pendingReviewCount = await prisma.article.count({ where: { status: "IN_REVIEW" } });
-  const pendingAdminCount = await prisma.article.count({ where: { status: "PENDING_ADMIN" } });
-  
-  // Sum views
-  const viewsAggregate = await prisma.article.aggregate({
-    _sum: { views: true },
-  });
-  const totalViews = viewsAggregate._sum.views || 0;
+  // Fetch counts and metrics (with safe defaults if DB is unavailable)
+  let totalArticles = 0;
+  let totalPublished = 0;
+  let pendingReviewCount = 0;
+  let pendingAdminCount = 0;
+  let totalViews = 0;
+  let totalAuthors = 0;
+  let topArticles: any[] = [];
+  let reviewQueue: any[] = [];
 
-  const totalAuthors = await prisma.user.count({ where: { role: "AUTHOR" } });
+  try {
+    totalArticles = await prisma.article.count();
+  } catch (e) { console.error("studio: count articles failed", e); }
 
-  // Fetch top 5 viewed articles
-  const topArticles = await prisma.article.findMany({
-    where: { status: "PUBLISHED" },
-    include: { authors: true, category: true },
-    orderBy: { views: "desc" },
-    take: 5,
-  });
+  try {
+    totalPublished = await prisma.article.count({ where: { status: "PUBLISHED" } });
+  } catch (e) { console.error("studio: count published failed", e); }
 
-  // Fetch recent review queue items (IN_REVIEW and PENDING_ADMIN)
-  const reviewQueue = await prisma.article.findMany({
-    where: {
-      status: { in: ["IN_REVIEW", "PENDING_ADMIN"] },
-    },
-    include: { authors: true, category: true },
-    orderBy: { updatedAt: "desc" },
-    take: 5,
-  });
+  try {
+    pendingReviewCount = await prisma.article.count({ where: { status: "IN_REVIEW" } });
+  } catch (e) { console.error("studio: count in_review failed", e); }
+
+  try {
+    pendingAdminCount = await prisma.article.count({ where: { status: "PENDING_ADMIN" } });
+  } catch (e) { console.error("studio: count pending_admin failed", e); }
+
+  try {
+    const viewsAggregate = await prisma.article.aggregate({ _sum: { views: true } });
+    totalViews = viewsAggregate?._sum?.views || 0;
+  } catch (e) { console.error("studio: aggregate views failed", e); }
+
+  try {
+    totalAuthors = await prisma.user.count({ where: { role: "AUTHOR" } });
+  } catch (e) { console.error("studio: count authors failed", e); }
+
+  try {
+    topArticles = await prisma.article.findMany({
+      where: { status: "PUBLISHED" },
+      include: { authors: true, category: true },
+      orderBy: { views: "desc" },
+      take: 5,
+    });
+  } catch (e) { console.error("studio: findMany top articles failed", e); }
+
+  try {
+    reviewQueue = await prisma.article.findMany({
+      where: { status: { in: ["IN_REVIEW", "PENDING_ADMIN"] } },
+      include: { authors: true, category: true },
+      orderBy: { updatedAt: "desc" },
+      take: 5,
+    });
+  } catch (e) { console.error("studio: findMany review queue failed", e); }
 
   const cards = [
     { name: "Total Articles", value: totalArticles, icon: FileText, desc: `${totalPublished} Published` },
