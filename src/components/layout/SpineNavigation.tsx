@@ -39,12 +39,10 @@ export default function SpineNavigation({ categories }: SpineNavigationProps) {
     <>
       {/* DESKTOP SPINE (w-16, md:flex hidden) */}
       <aside className="hidden md:flex w-16 flex-col items-center justify-between py-6 border-r border-ink sticky top-0 h-screen bg-paper z-40 select-none">
-        {/* TYPOGRAPHIC VERTICAL LOGO */}
-        <Link href="/" className="hover:opacity-80 transition-opacity my-4 shrink-0 flex flex-col items-center justify-center font-display text-[16px] font-semibold tracking-wide text-ink select-none leading-[1.1] uppercase">
-          <span>S</span>
-          <span>E</span>
-          <span>R</span>
-          <span>A</span>
+        {/* LOGO IMAGE — rotated to fit vertical spine */}
+        <Link href="/" className="hover:opacity-80 transition-opacity my-4 shrink-0 block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="SERA" className="w-[50px] h-auto" style={{ transform: 'rotate(-90deg)', transformOrigin: 'center center' }} />
         </Link>
 
         {/* NAVIGATION LINKS */}

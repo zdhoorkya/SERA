@@ -93,12 +93,7 @@ export default function StudioLoginPage() {
           </button>
         </form>
         
-        <div className="text-center mt-6">
-          <p className="text-[10px] text-[#A1A1AA] uppercase tracking-wider">
-            Admin: admin@sera.com / password123 <br />
-            Editor: editor@sera.com / password123
-          </p>
-        </div>
+
       </div>
     </div>
   );
