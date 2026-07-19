@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import path from "path";
-import fs from "fs";
 import { Jimp } from "jimp";
 
 export async function POST(req: NextRequest) {
@@ -23,28 +21,51 @@ export async function POST(req: NextRequest) {
 
     // 1. Process image using Jimp (server-side grayscale/contrast adjustment)
     const jimpImage = await Jimp.read(buffer);
-    
-    // Apply grayscale + contrast adjustment (+8%) matching CSS treatment exactly
     jimpImage.grayscale().contrast(0.08);
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    // 2. Get processed image as buffer (PNG)
+    const processedBuffer = await jimpImage.getBuffer("image/png");
+    const base64 = processedBuffer.toString("base64");
 
-    // Ensure uploads directory exists
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    // 3. Send to remote PHP database server for persistent storage
+    const remoteUrl = "https://database.primpla.com/api.php";
+    const dbToken = process.env.DB_ACCESS_TOKEN || "primpla-sera-2026";
+
+    const ext = file.name.split(".").pop() || "png";
+    const filename = `${Date.now()}-${Math.floor(Math.random() * 10000)}.png`;
+
+    const response = await fetch(remoteUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Database-Token": dbToken,
+      },
+      body: JSON.stringify({
+        token: dbToken,
+        model: "Upload",
+        action: "uploadImage",
+        args: {
+          filename,
+          base64,
+          mimeType: "image/png",
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Remote upload failed:", response.status, errText);
+      return NextResponse.json({ message: "Image upload failed" }, { status: 500 });
     }
 
-    // Generate unique name
-    const ext = file.name.split(".").pop() || "png";
-    const filename = `${Date.now()}-${Math.floor(Math.random() * 10000)}.${ext}`;
-    const filePath = path.join(uploadsDir, filename);
+    const result = await response.json();
+    if (result.error) {
+      console.error("Remote upload error:", result.error);
+      return NextResponse.json({ message: "Image upload failed" }, { status: 500 });
+    }
 
-    // Save image
-    await jimpImage.writeAsync(filePath);
-
-    // Return public path
-    const url = `/uploads/${filename}`;
-    return NextResponse.json({ url });
+    // Return the public URL from the remote server
+    return NextResponse.json({ url: result.url });
   } catch (e) {
     console.error("Upload API error:", e);
     return NextResponse.json({ message: "Image processing failed" }, { status: 500 });
