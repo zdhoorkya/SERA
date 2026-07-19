@@ -12,8 +12,9 @@ class MockPrismaModel {
   private async fetchRemote(action: string, args: any = {}) {
     const remoteUrl = "https://database.primpla.com/api.php";
     const dbToken = process.env.DB_ACCESS_TOKEN || "primpla-sera-2026";
+    const isReadAction = ["findMany", "findUnique", "findFirst", "count", "aggregate", "groupBy"].includes(action);
     try {
-      const response = await fetch(remoteUrl, {
+      const fetchOptions: RequestInit = {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -25,8 +26,15 @@ class MockPrismaModel {
           action,
           args,
         }),
-        cache: "no-store", // Disable caching to fetch live records
-      });
+      };
+
+      if (isReadAction) {
+        (fetchOptions as any).next = { revalidate: 5 }; // 5-sec revalidation to reduce server CPU load
+      } else {
+        fetchOptions.cache = "no-store";
+      }
+
+      const response = await fetch(remoteUrl, fetchOptions);
 
       if (!response.ok) {
         throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
