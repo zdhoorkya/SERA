@@ -82,6 +82,14 @@ class MockPrismaModel {
   async groupBy(args?: any) {
     return this.fetchRemote("groupBy", args);
   }
+
+  async aggregate(args?: any) {
+    return this.fetchRemote("aggregate", args);
+  }
+
+  async upsert(args?: any) {
+    return this.fetchRemote("upsert", args);
+  }
 }
 
 class MockPrismaClient {
